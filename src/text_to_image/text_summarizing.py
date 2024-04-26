@@ -16,8 +16,10 @@ os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 INPUT_FILE_PATH = '/content/drive/MyDrive/datacolab_dataset/booksummaries.txt'
 OUTPUT_FILE_PATH = '/content/drive/MyDrive/datacolab_dataset/summary_outputs/output.csv'
 
-
-class T5SummarizationPipeline:
+class TextSummarizer:
+    """
+    A class responsible for generating text summaries using the T5 Transformer model.
+    """
     def __init__(self, model_name: str, device: str):
         self.model_name = model_name
         self.device = device
@@ -26,6 +28,15 @@ class T5SummarizationPipeline:
         self.model = self.model.half()  # Enable mixed precision training
 
     def summarize_batch(self, input_texts: list[str]) -> list[str]:
+        """
+        Generate text summaries for a batch of input texts using the T5 Transformer model.
+
+        Args:
+            input_texts (list[str]): A list of input texts to be summarized.
+
+        Returns:
+            list[str]: A list of generated text summaries.
+        """
         inputs = self.tokenizer.batch_encode_plus(["summarize: " + text for text in input_texts], return_tensors="pt",
                                                   max_length=1024, truncation=True, padding=True).to(self.model.device)
         with torch.cuda.stream(torch.cuda.Stream()):
@@ -34,60 +45,95 @@ class T5SummarizationPipeline:
         summarized_texts = [self.tokenizer.decode(ids, skip_special_tokens=True) for ids in summary_ids]
         return summarized_texts
 
+class SummarizationManager:
+    """
+    A class responsible for managing the text summarization process, including loading input data,
+    checking existing summaries, and writing the results to the output file.
+    """
+    def __init__(self, input_file_path: str, output_file_path: str):
+        self.input_file_path = input_file_path
+        self.output_file_path = output_file_path
 
-def summarize_summaries_parallel(pipeline: T5SummarizationPipeline, df: pd.DataFrame, batch_size: int,
-                                 output_file: str) -> None:
-    # Open the output file in append mode
-    with open(output_file, 'a') as f:
-        # Check if the output file is empty
-        if os.stat(output_file).st_size == 0:
-            # Write the header for the output CSV file
-            f.write('freebaseID,CondensedSummary\n')
-            # Start the summarization process from the beginning
-            start_index = 0
-        else:
-            # Read the existing freebaseIDs from the output CSV file
-            existing_freebase_id = pd.read_csv(output_file, header=None)[0].tolist()
-            # Find the index of the first non-condensed summary
-            start_index = df[~df['freebase_id'].isin(existing_freebase_id)].index[0]
+    def load_input_data(self) -> pd.DataFrame:
+        """
+        Load the input data from the specified file path.
 
-        # Summarize the remaining texts
-        for i in range(start_index, len(df), batch_size):
-            batch_texts = df['summary'].tolist()[i:i + batch_size]
-            batch_summaries = pipeline.summarize_batch(batch_texts)
-            batch_df = pd.DataFrame(
-                {'freebaseID': df['freebase_id'].tolist()[i:i + batch_size], 'CondensedSummary': batch_summaries})
+        Returns:
+            pd.DataFrame: The input DataFrame containing the text summaries.
+        """
+        column_names = ["length", "freebase_id", "book_name", "author_name", "date", "freebase_id_json", "summary"]
+        data = pd.read_csv(self.input_file_path, sep="\t", header=None, names=column_names)
+        return pd.DataFrame(data)
 
-            # Write the batch to the output CSV file
-            batch_df.to_csv(f, index=False, header=False)
+    def get_existing_freebase_ids(self) -> list[str]:
+        """
+        Get a list of existing freebaseIDs from the output CSV file.
 
+        Returns:
+            list[str]: A list of existing freebaseIDs.
+        """
+        if os.path.exists(self.output_file_path):
+            return pd.read_csv(self.output_file_path, header=None)[0].tolist()
+        return []
+
+    def summarize_and_save(self, pipeline: TextSummarizer, df: pd.DataFrame, batch_size: int) -> None:
+        """
+        Summarize the text summaries in the input DataFrame in parallel and save the results to the output file.
+
+        Args:
+            pipeline (TextSummarizer): An instance of the TextSummarizer class.
+            df (pd.DataFrame): The input DataFrame containing the text summaries.
+            batch_size (int): The batch size for parallel processing.
+        """
+        # Open the output file in append mode
+        with open(self.output_file_path, 'a') as f:
+            # Check if the output file is empty
+            if os.stat(self.output_file_path).st_size == 0:
+                # Write the header for the output CSV file
+                f.write('freebaseID,CondensedSummary\n')
+                # Start the summarization process from the beginning
+                start_index = 0
+            else:
+                # Get the existing freebaseIDs from the output CSV file
+                existing_freebase_ids = self.get_existing_freebase_ids()
+                # Find the index of the first non-condensed summary
+                start_index = df[~df['freebase_id'].isin(existing_freebase_ids)].index[0]
+
+            # Summarize the remaining texts
+            for i in range(start_index, len(df), batch_size):
+                batch_texts = df['summary'].tolist()[i:i + batch_size]
+                batch_summaries = pipeline.summarize_batch(batch_texts)
+                batch_df = pd.DataFrame(
+                    {'freebaseID': df['freebase_id'].tolist()[i:i + batch_size], 'CondensedSummary': batch_summaries})
+
+                # Write the batch to the output CSV file
+                batch_df.to_csv(f, index=False, header=False)
 
 def main():
+    """
+    The main entry point of the application.
+
+    1. Create a SummarizationManager instance to handle the input data and output file
+    2. Load the input data
+    3. Check if the output file exists and if all summaries have been generated
+    4. Create a TextSummarizer instance and apply parallelized summarization to the input DataFrame
+    """
     try:
-        # Sample DataFrame with a 'summary' column
-        column_names = ["length", "freebase_id", "book_name", "author_name", "date", "freebase_id_json", "summary"]
-        data = pd.read_csv(INPUT_FILE_PATH, sep="\t", header=None, names=column_names)
-        df = pd.DataFrame(data)
+        manager = SummarizationManager(INPUT_FILE_PATH, OUTPUT_FILE_PATH)
+        df = manager.load_input_data()
 
-        # Set the output file path
-        output_file = OUTPUT_FILE_PATH
-
-        # Check if the output file exists
-        if os.path.exists(output_file):
-            # Read the existing freebaseIDs from the output CSV file
-            existing_freebase_id = pd.read_csv(output_file, header=None)[0].tolist()
-            # Check if all the freebaseIDs are already in the output CSV file
-            if set(df['freebase_id']).issubset(existing_freebase_id):
-                print("All summaries are condensed.")
-                return
+        # Check if the output file exists and if all summaries have been generated
+        existing_freebase_ids = manager.get_existing_freebase_ids()
+        if set(df['freebase_id']).issubset(existing_freebase_ids):
+            print("All summaries are condensed.")
+            return
 
         # Apply parallelized summarization to the DataFrame
-        pipeline = T5SummarizationPipeline(model_name="t5-small", device='cuda' if torch.cuda.is_available() else 'cpu')
-        summarize_summaries_parallel(pipeline, df, batch_size=32, output_file=output_file)
+        pipeline = TextSummarizer(model_name="t5-small", device='cuda' if torch.cuda.is_available() else 'cpu')
+        manager.summarize_and_save(pipeline, df, batch_size=32)
     except Exception as e:
         print(f"An error occurred: {e}")
         sys.exit(1)
-
 
 if __name__ == '__main__':
     main()
