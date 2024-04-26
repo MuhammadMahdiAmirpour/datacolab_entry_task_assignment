@@ -1,10 +1,11 @@
 import os
 import sys
+
 import pandas as pd
 import torch
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 
-# you need to uncomment this line when you want to run this code on google colab and load you data from google drive
+# you need to uncomment this line when you want to run this code on Google colab and load you data from Google Drive
 # from google.colab import drive
 # Mount Google Drive as a local file system
 # drive.mount('/content/drive')
@@ -16,10 +17,12 @@ os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 INPUT_FILE_PATH = '/content/drive/MyDrive/datacolab_dataset/booksummaries.txt'
 OUTPUT_FILE_PATH = '/content/drive/MyDrive/datacolab_dataset/summary_outputs/output.csv'
 
+
 class TextSummarizer:
     """
     A class responsible for generating text summaries using the T5 Transformer model.
     """
+
     def __init__(self, model_name: str, device: str):
         self.model_name = model_name
         self.device = device
@@ -45,11 +48,13 @@ class TextSummarizer:
         summarized_texts = [self.tokenizer.decode(ids, skip_special_tokens=True) for ids in summary_ids]
         return summarized_texts
 
+
 class SummarizationManager:
     """
     A class responsible for managing the text summarization process, including loading input data,
     checking existing summaries, and writing the results to the output file.
     """
+
     def __init__(self, input_file_path: str, output_file_path: str):
         self.input_file_path = input_file_path
         self.output_file_path = output_file_path
@@ -109,6 +114,7 @@ class SummarizationManager:
                 # Write the batch to the output CSV file
                 batch_df.to_csv(f, index=False, header=False)
 
+
 def main():
     """
     The main entry point of the application.
@@ -134,6 +140,7 @@ def main():
     except Exception as e:
         print(f"An error occurred: {e}")
         sys.exit(1)
+
 
 if __name__ == '__main__':
     main()
