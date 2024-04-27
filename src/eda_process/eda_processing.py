@@ -12,28 +12,6 @@ def initial_exploration(input_data):
     print(input_data.tail())
 
 
-def unify_date_formats_full(input_df):
-    # Function to convert the date format
-    # Function to convert the date format
-    def convert_date_format(date_str):
-        if isinstance(date_str, str) and len(date_str) == 4:
-            return f"{date_str}-01-01"
-        else:
-            return date_str
-
-    # Apply the conversion function to the 'date' column
-    input_df['date'] = input_df['date'].apply(convert_date_format)
-
-    # Convert the 'date' column to datetime format
-    input_df['date'] = pd.to_datetime(input_df['date'], errors='coerce')
-
-
-def unify_date_format_year(input_df):
-    # Extract year from the date and fill missing values with ''
-    years = [date[:4] if isinstance(date, str) and len(date) >= 4 else '' for date in input_df['date']]
-    df['date'] = years
-
-
 def check_for_missing_values(input_data):
     print(input_data.isnull().sum())
 
@@ -84,10 +62,8 @@ def check_loss_for_missing(input_df, column_name):
 
 if __name__ == '__main__':
     column_names = ["length", "freebase_id", "book_name", "author_name", "date", "freebase_id_json", "summary"]
-    df = pd.read_csv('../../data/datacolab_dataset/booksummaries.txt', sep="\t", header=None, names=column_names)
-    unify_date_format_year(df)
-    print(df['date'])
-    print(df['date'].value_counts())
+    df = pd.read_csv('../../data/datacolab_dataset/txt_format/booksummaries.txt', sep="\t", header=None,
+                     names=column_names)
     # data = clean_data(data)
     # Apply the extract_genre function to create a new 'genre' column
     # data['genre'] = data['freebase_id_json'].apply(extract_genre)
