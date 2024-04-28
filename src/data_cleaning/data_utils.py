@@ -5,12 +5,23 @@ import string
 import pandas as pd
 
 
-# Function to safely parse JSON-like text into dictionaries
-def safe_json_parse(text):
-    try:
-        return json.loads(text)
-    except (json.JSONDecodeError, TypeError):
-        return {}
+def parse_json_column(df, column_name):
+    def parse_json(cell):
+        try:
+            return json.loads(cell) if pd.notnull(cell) and isinstance(cell, str) else cell
+        except json.JSONDecodeError:
+            return cell
+
+    df[column_name] = df[column_name].apply(parse_json)
+    return df
+
+
+def transform_date_formats(df):
+    df['date'] = pd.to_datetime(df['date'], errors='coerce')
+    df['date'] = df['date'].dt.strftime('%Y-%m-%d')
+    df.loc[df['date'].str.len() == 7, 'date'] = pd.to_datetime(df.loc[df['date'].str.len() == 7, 'date'],
+                                                               format='%Y-%m').dt.strftime('%Y-%m')
+    return df
 
 
 # Clean the summary text
@@ -23,13 +34,13 @@ def clean_summary(summary):
 
 # Clean the summary column in the DataFrame
 def clean_summary_df(input_data):
+    # Calculate the frequency table
+    freq_table = input_data["summary"].value_counts()
+    # Get the top 10 most frequent summaries
+    top_10_summaries = freq_table.head(10).index
+    # Replace the top 10 most frequent summaries with an empty string
+    input_data.loc[input_data["summary"].isin(top_10_summaries), "summary"] = ""
     input_data["summary"] = input_data["summary"].map(clean_summary)
-
-
-# Function to extract genre IDs from JSON
-def extract_genre_ids(json_str):
-    genres = safe_json_parse(json_str)
-    return list(genres.keys()) if genres else []
 
 
 # Function to unify date format to year
