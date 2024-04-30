@@ -4,7 +4,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
 
-from src.data_cleaning.data_utils import DataCleaner
+from src.data_cleaning.data_utils import DataUtilityProvider
 
 
 class DataPreprocessor:
@@ -35,10 +35,10 @@ class DataPreprocessor:
             pandas.DataFrame: The cleaned and preprocessed DataFrame.
         """
         # Clean the summary column
-        self.df['summary'] = self.df['summary'].apply(DataCleaner.clean_summary)
+        self.df['summary'] = self.df['summary'].apply(DataUtilityProvider.clean_summary)
 
         # Parse JSON column to dictionary
-        self.df['freebase_id_json'] = DataCleaner(df=self.df).parse_json_column('freebase_id_json')['freebase_id_json']
+        self.df['freebase_id_json'] = DataUtilityProvider(df=self.df).parse_json_column('freebase_id_json')['freebase_id_json']
 
         # Extract genre IDs from JSON column
         self.df['genre_ids'] = self.df['freebase_id_json'].apply(
@@ -125,7 +125,7 @@ class BookYearPredictor:
         # Example prediction using genre information
         new_genre_json = '{"1": "fantasy", "2": "adventure"}'
         # new_genre_ids = self.preprocessor.safe_json_parse(new_genre_json)
-        new_genre_ids = DataCleaner(df=df_cleaned).parse_json_column(column_name='freebase_id_json')
+        new_genre_ids = DataUtilityProvider(df=df_cleaned).parse_json_column(column_name='freebase_id_json')
         new_genre_ids_str = ','.join(new_genre_ids.keys())
         new_genre_ids_bin = encoder.transform([[new_genre_ids_str]])
         new_year_pred = model.predict(new_genre_ids_bin)
@@ -141,7 +141,7 @@ def main():
                        names=column_names)
 
     # Unify the date format to year
-    data = DataCleaner(data).unify_date_format_year()
+    data = DataUtilityProvider(data).unify_date_format_year()
 
     # Create an instance of the BookYearPredictor class and train the model
     predictor = BookYearPredictor(data)

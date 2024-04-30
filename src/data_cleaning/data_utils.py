@@ -5,7 +5,7 @@ import string
 import pandas as pd
 
 
-class DataCleaner:
+class DataUtilityProvider:
     """
     A class to clean and preprocess a DataFrame.
 
@@ -111,7 +111,7 @@ if __name__ == '__main__':
                        names=column_names)
 
     # Create an instance of the DataCleaner class and clean the data
-    data_cleaner = DataCleaner(data)
+    data_cleaner = DataUtilityProvider(data)
     data_cleaner.parse_json_column("freebase_id_json")
     data_cleaner.transform_date_formats()
     data_cleaner.clean_summary_df()
