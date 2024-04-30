@@ -3,25 +3,64 @@ import pandas as pd
 from src.data_cleaning.data_utils import (transform_date_formats,
                                           parse_json_column,
                                           clean_summary_df)
-from src.data_cleaning.missing_handler import handle_missing_values
 
 
-def clean_data(input_df):
-    # handling missing values (replace with empty string or custom value)
-    input_df.fillna("")
-    input_df.drop_duplicates(keep='first', inplace=True)
-    # unify_date_format_year(input_df)
-    transform_date_formats(input_df)
-    parse_json_column(input_df, "freebase_id_json")
-    clean_summary_df(input_df)
-    handle_missing_values(input_df)
-    input_df = input_df.dropna(subset=['date', 'freebase_id_json'])
-    return input_df
+class DataCleaner:
+    """
+    A class to clean and preprocess a DataFrame.
+
+    Attributes:
+        df (pandas.DataFrame): The input DataFrame.
+
+    Methods:
+        clean_data(): Performs the complete data cleaning process.
+    """
+
+    def __init__(self, df):
+        """
+        Initializes the DataCleaner object.
+
+        Args:
+            df (pandas.DataFrame): The input DataFrame.
+        """
+        self.df = df
+
+    def clean_data(self):
+        """
+        Cleans and preprocesses the input DataFrame.
+
+        Returns:
+            pandas.DataFrame: The cleaned and preprocessed DataFrame.
+        """
+        # Handle missing values (replace with empty string)
+        self.df.fillna("", inplace=True)
+
+        # Drop duplicate rows
+        self.df.drop_duplicates(keep='first', inplace=True)
+
+        # Transform date formats
+        transform_date_formats(self.df)
+
+        # Parse JSON column
+        parse_json_column(self.df, "freebase_id_json")
+
+        # Clean summary column
+        clean_summary_df(self.df)
+
+        # Handle missing values (drop rows with missing 'date' or 'freebase_id_json')
+        self.df = self.df.dropna(subset=['date', 'freebase_id_json'])
+
+        return self.df
 
 
 if __name__ == '__main__':
     column_names = ["length", "freebase_id", "book_name", "author_name", "date", "freebase_id_json", "summary"]
     data = pd.read_csv('../../data/datacolab_dataset/txt_format/booksummaries.txt', sep="\t", header=None,
                        names=column_names)
-    data_cleaned = clean_data(data)
+
+    # Create an instance of the DataCleaner class and clean the data
+    data_cleaner = DataCleaner(data)
+    data_cleaned = data_cleaner.clean_data()
+
+    # Print a sample of the cleaned 'date' column
     print(data_cleaned["date"][50:60])
