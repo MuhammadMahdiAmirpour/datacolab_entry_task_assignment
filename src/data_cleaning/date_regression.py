@@ -4,7 +4,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
 
-from src.data_cleaning.data_utils import DataUtilityProvider
+from src.data_cleaning.data_utility_provider import DataUtilityProvider
 
 
 class DataPreprocessor:
