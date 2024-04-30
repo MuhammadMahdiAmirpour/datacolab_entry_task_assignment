@@ -28,7 +28,7 @@ def get_tfidf_cov_matrix(df):
     return cov_matrix
 
 
-def plot_covariance_matrix(df, covariance_matrix):
+def plot_covariance_matrix(df, cov_mat):
     """
     Plots the covariance matrix of a DataFrame.
 
@@ -42,7 +42,7 @@ def plot_covariance_matrix(df, covariance_matrix):
     feature_names = df.columns
 
     # Create the heatmap
-    sns.heatmap(covariance_matrix, annot=True, cmap='YlOrRd', vmin=-1, vmax=1, xticklabels=feature_names,
+    sns.heatmap(cov_mat, annot=True, cmap='YlOrRd', vmin=-1, vmax=1, xticklabels=feature_names,
                 yticklabels=feature_names)
 
     plt.title('Covariance Matrix')
