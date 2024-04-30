@@ -9,6 +9,7 @@ class DataCleaner:
 
     Attributes:
         df (pandas.DataFrame): The input DataFrame.
+        data_utility_provider (DataUtilityProvider): The data utility provider object.
 
     Methods:
         clean_data(): Performs the complete data cleaning process.
@@ -22,6 +23,7 @@ class DataCleaner:
             df (pandas.DataFrame): The input DataFrame.
         """
         self.df = df
+        self.data_utility_provider = DataUtilityProvider(df)
 
     def clean_data(self):
         """
@@ -37,13 +39,13 @@ class DataCleaner:
         self.df.drop_duplicates(keep='first', inplace=True)
 
         # Transform date formats
-        transform_date_formats(self.df)
+        self.data_utility_provider.transform_date_formats()
 
         # Parse JSON column
-        parse_json_column(self.df, "freebase_id_json")
+        self.data_utility_provider.parse_json_column(column_name="freebase_id_json")
 
         # Clean summary column
-        clean_summary_df(self.df)
+        self.data_utility_provider.clean_summary_df()
 
         # Handle missing values (drop rows with missing 'date' or 'freebase_id_json')
         self.df = self.df.dropna(subset=['date', 'freebase_id_json'])
@@ -51,7 +53,8 @@ class DataCleaner:
         return self.df
 
 
-if __name__ == '__main__':
+def main():
+    # Load data from text file into DataFrame
     column_names = ["length", "freebase_id", "book_name", "author_name", "date", "freebase_id_json", "summary"]
     data = pd.read_csv('../../data/datacolab_dataset/txt_format/booksummaries.txt', sep="\t", header=None,
                        names=column_names)
@@ -62,3 +65,7 @@ if __name__ == '__main__':
 
     # Print a sample of the cleaned 'date' column
     print(data_cleaned["date"][50:60])
+
+
+if __name__ == '__main__':
+    main()
