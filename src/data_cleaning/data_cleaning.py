@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.data_cleaning.data_utils import DataUtilityProvider
+from src.data_cleaning.data_utility_provider import DataUtilityProvider
 
 
 class DataCleaner:
