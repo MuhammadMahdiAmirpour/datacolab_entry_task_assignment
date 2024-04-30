@@ -1,81 +1,194 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+from collections import Counter
 
 
-def initial_exploration(input_data):
-    print("head")
-    print(input_data.head())
-    print("info")
-    print(input_data.info())
-    print("tail")
-    print(input_data.tail())
+class DataExplorer:
+    """
+    A class to perform comprehensive exploratory data analysis on a DataFrame.
 
+    Attributes:
+        df (pandas.DataFrame): The input DataFrame.
 
-def check_for_missing_values(input_data):
-    print(input_data.isnull().sum())
+    Methods:
+        initial_exploration(): Performs initial exploration of the DataFrame.
+        check_for_missing_values(): Checks for missing values in the DataFrame.
+        get_sample_of_each_column(): Prints a sample value for each column in the DataFrame.
+        explore_numerical_columns(): Analyzes the numerical columns in the DataFrame.
+        explore_categorical_columns(): Analyzes the categorical columns in the DataFrame.
+        explore_text_columns(): Analyzes the text columns in the DataFrame.
+        explore_date_column(): Analyzes the date column in the DataFrame.
+        explore_genre_column(): Analyzes the genre column in the DataFrame.
+        check_loss_for_missing(column_name): Calculates the percentage of data loss if a column is dropped.
+    """
 
+    def __init__(self, input_df):
+        """
+        Initializes the DataExplorer object.
 
-def get_sample_of_each_column(data):
-    for col in data:
-        print("column num: ", col)
-        print(data[col][0])
+        Args:
+            input_df (pandas.DataFrame): The input DataFrame.
+        """
+        self.df = input_df
 
+    def initial_exploration(self):
+        """
+        Performs initial exploration of the DataFrame.
 
-def histogram_of_each_column(input_data):
-    plt.figure(figsize=(8, 6))
-    sns.histplot(data=input_data, x="length")
-    plt.title('Histogram of Numerical Column')
-    plt.xlabel('Values')
-    plt.ylabel('Frequency')
-    plt.show()
+        Prints the head, info, and tail of the DataFrame.
+        """
+        print("Head:")
+        print(self.df.head())
+        print("\nInfo:")
+        print(self.df.info())
+        print("\nTail:")
+        print(self.df.tail())
 
+    def check_for_missing_values(self):
+        """
+        Checks for missing values in the DataFrame.
 
-# def count_plot(input_data, hue, categorical_column):
-#     plt.figure(figsize=(8, 6))
-#     sns.countplot(data=input_data, hue=hue, x=categorical_column)
-#     plt.title('Count Plot of Categorical Column')
-#     plt.xlabel('Categories')
-#     plt.ylabel('Count')
-#     plt.show()
+        Prints the sum of missing values for each column.
+        """
+        print("Missing values:")
+        print(self.df.isnull().sum())
 
-def count_plot(input_data, hue, categorical_column):
-    plt.figure(figsize=(8, 6))
-    sns.countplot(data=input_data, hue=hue, x=categorical_column)
-    plt.title('Count Plot of Categorical Column')
-    plt.xlabel('Categories')
-    plt.ylabel('Count')
-    plt.show()
+    def get_sample_of_each_column(self):
+        """
+        Prints a sample value for each column in the DataFrame.
+        """
+        for col in self.df.columns:
+            print(f"Column: {col}")
+            print(self.df[col][0])
 
+    def explore_numerical_columns(self):
+        """
+        Analyzes the numerical columns in the DataFrame.
 
-def extract_genre(json_dict):
-    return list(json_dict.values())
+        Plots histograms and box plots for each numerical column.
+        """
+        num_cols = self.df.select_dtypes(include=[int, float]).columns
+        for col in num_cols:
+            plt.figure(figsize=(8, 6))
+            sns.histplot(data=self.df, x=col)
+            plt.title(f'Histogram of {col}')
+            plt.xlabel(col)
+            plt.ylabel('Frequency')
+            plt.show()
 
+            plt.figure(figsize=(8, 6))
+            sns.boxplot(data=self.df, x=col)
+            plt.title(f'Box Plot of {col}')
+            plt.xlabel(col)
+            plt.ylabel('Value')
+            plt.show()
 
-def check_loss_for_missing(input_df, column_name):
-    df1 = input_df.copy(deep=True)
-    s1 = df1.size
-    df1.drop([column_name], axis=1, inplace=True)
-    s2 = df1.size
-    return s2 / s1
+    def explore_categorical_columns(self):
+        """
+        Analyzes the categorical columns in the DataFrame.
+
+        Plots count plots for each categorical column.
+        """
+        cat_cols = self.df.select_dtypes(exclude=[int, float]).columns
+        for col in cat_cols:
+            plt.figure(figsize=(8, 6))
+            sns.countplot(data=self.df, x=col)
+            plt.title(f'Count Plot of {col}')
+            plt.xlabel(col)
+            plt.ylabel('Count')
+            plt.xticks(rotation=90)
+            plt.show()
+
+    def explore_text_columns(self):
+        """
+        Analyzes the text columns in the DataFrame.
+
+        Prints the most common words in each text column.
+        """
+        text_cols = [col for col in self.df.columns if self.df[col].dtype == 'object']
+        for col in text_cols:
+            words = ' '.join(self.df[col]).split()
+            word_counts = Counter(words)
+            print(f"Most common words in {col}: ")
+            print(word_counts.most_common(10))
+
+    def explore_date_column(self):
+        """
+        Analyzes the date column in the DataFrame.
+
+        Plots the number of books published per year.
+        """
+        self.df['date'] = pd.to_datetime(self.df['date'])
+        plt.figure(figsize=(10, 6))
+        self.df['date'].dt.year.value_counts().sort_index().plot(kind='bar')
+        plt.title('Number of Books Published per Year')
+        plt.xlabel('Year')
+        plt.ylabel('Count')
+        plt.show()
+
+    def explore_genre_column(self):
+        """
+        Analyzes the genre column in the DataFrame.
+
+        Plots the top 10 most common genres.
+        """
+        genres = [genre for genres in self.df['freebase_id_json'].apply(self.extract_genre) for genre in genres]
+        genre_counts = Counter(genres)
+        plt.figure(figsize=(10, 6))
+        sns.barplot(x=list(genre_counts.most_common(10))[0], y=list(genre_counts.most_common(10))[1])
+        plt.title('Top 10 Most Common Genres')
+        plt.xlabel('Genre')
+        plt.ylabel('Count')
+        plt.xticks(rotation=90)
+        plt.show()
+
+    @staticmethod
+    def extract_genre(json_dict):
+        """
+        Extracts the genres from a JSON-like dictionary.
+
+        Args:
+            json_dict (dict): The input JSON-like dictionary.
+
+        Returns:
+            list: A list of genres extracted from the dictionary.
+        """
+        return list(json_dict.values())
+
+    def check_loss_for_missing(self, column_name):
+        """
+        Calculates the percentage of data loss if a column is dropped.
+
+        Args:
+            column_name (str): The name of the column to check.
+
+        Returns:
+            float: The percentage of data loss if the column is dropped.
+        """
+        df1 = self.df.copy(deep=True)
+        s1 = df1.size
+        df1.drop([column_name], axis=1, inplace=True)
+        s2 = df1.size
+        return s2 / s1
 
 
 if __name__ == '__main__':
     column_names = ["length", "freebase_id", "book_name", "author_name", "date", "freebase_id_json", "summary"]
     df = pd.read_csv('../../data/datacolab_dataset/txt_format/booksummaries.txt', sep="\t", header=None,
                      names=column_names)
-    # data = clean_data(data)
-    # Apply the extract_genre function to create a new 'genre' column
-    # data['genre'] = data['freebase_id_json'].apply(extract_genre)
-    # Flatten the 'genre' column (assuming each row has one or more genres)
-    # data = data.explode('genre')
-    # Reset the index to ensure unique labels
-    # data.reset_index(drop=True, inplace=True)
-    # print("initial exploration")
-    # initial_exploration(df)
-    # print("check for missing values")
-    # check_for_missing_values(df)
-    # print("get sample of each column")
-    # get_sample_of_each_column(df)
-    # histogram_of_each_column(data)
-    # count_plot(data, hue="freebase_id", categorical_column="genre")
+
+    # Create an instance of the DataExplorer class and perform the analysis
+    data_explorer = DataExplorer(df)
+    data_explorer.initial_exploration()
+    data_explorer.check_for_missing_values()
+    data_explorer.get_sample_of_each_column()
+    data_explorer.explore_numerical_columns()
+    data_explorer.explore_categorical_columns()
+    data_explorer.explore_text_columns()
+    data_explorer.explore_date_column()
+    data_explorer.explore_genre_column()
+
+    # Check the data loss if a column is dropped
+    print(
+        f"Data loss if 'freebase_id_json' column is dropped: {data_explorer.check_loss_for_missing('freebase_id_json'):.2%}")
