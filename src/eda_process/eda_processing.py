@@ -108,7 +108,8 @@ class DataExplorer:
         """
         text_cols = [col for col in self.df.columns if self.df[col].dtype == 'object']
         for col in text_cols:
-            words = ' '.join(self.df[col]).split()
+            # Handle NaN values by converting them to an empty string
+            words = ' '.join(str(x) for x in self.df[col] if not pd.isnull(x)).split()
             word_counts = Counter(words)
             print(f"Most common words in {col}: ")
             print(word_counts.most_common(10))
@@ -177,10 +178,10 @@ class DataExplorer:
         self.check_for_missing_values()
         self.get_sample_of_each_column()
         self.explore_numerical_columns()
-        self.explore_categorical_columns()
+        # self.explore_categorical_columns()
         self.explore_text_columns()
-        self.explore_date_column()
-        self.explore_genre_column()
+        # self.explore_date_column()
+        # self.explore_genre_column()
 
 
 if __name__ == '__main__':
