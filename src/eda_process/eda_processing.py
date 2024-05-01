@@ -172,6 +172,16 @@ class DataExplorer:
         s2 = df1.size
         return s2 / s1
 
+    def explore_data(self):
+        self.initial_exploration()
+        self.check_for_missing_values()
+        self.get_sample_of_each_column()
+        self.explore_numerical_columns()
+        self.explore_categorical_columns()
+        self.explore_text_columns()
+        self.explore_date_column()
+        self.explore_genre_column()
+
 
 if __name__ == '__main__':
     column_names = ["length", "freebase_id", "book_name", "author_name", "date", "freebase_id_json", "summary"]
@@ -180,14 +190,7 @@ if __name__ == '__main__':
 
     # Create an instance of the DataExplorer class and perform the analysis
     data_explorer = DataExplorer(df)
-    data_explorer.initial_exploration()
-    data_explorer.check_for_missing_values()
-    data_explorer.get_sample_of_each_column()
-    data_explorer.explore_numerical_columns()
-    data_explorer.explore_categorical_columns()
-    data_explorer.explore_text_columns()
-    data_explorer.explore_date_column()
-    data_explorer.explore_genre_column()
+    data_explorer.explore_data()
 
     # Check the data loss if a column is dropped
     print(

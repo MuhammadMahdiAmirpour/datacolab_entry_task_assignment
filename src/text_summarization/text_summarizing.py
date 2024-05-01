@@ -1,6 +1,5 @@
 import os
 import sys
-
 import pandas as pd
 import torch
 from transformers import T5Tokenizer, T5ForConditionalGeneration
@@ -14,8 +13,10 @@ from transformers import T5Tokenizer, T5ForConditionalGeneration
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 
 # Define global variables for input and output file paths, you can change this if you have your custom dataset
-INPUT_FILE_PATH = '/content/drive/MyDrive/datacolab_dataset/booksummaries.txt'
-OUTPUT_FILE_PATH = '/content/drive/MyDrive/datacolab_dataset/summary_outputs/output.csv'
+# INPUT_FILE_PATH = '/content/drive/MyDrive/datacolab_dataset/booksummaries.txt'
+# OUTPUT_FILE_PATH = '/content/drive/MyDrive/datacolab_dataset/summary_outputs/output.csv'
+INPUT_FILE_PATH = '../../data/datacolab_dataset/txt_format/booksummaries.txt'
+OUTPUT_FILE_PATH = '../../results/summary_outputs/output.csv'
 
 
 class TextSummarizer:
@@ -115,7 +116,7 @@ class SummarizationManager:
                 batch_df.to_csv(f, index=False, header=False)
 
 
-def main():
+def run_text_summarization(input_file_path, output_file_path):
     """
     The main entry point of the application.
 
@@ -125,7 +126,7 @@ def main():
     4. Create a TextSummarizer instance and apply parallelized summarization to the input DataFrame
     """
     try:
-        manager = SummarizationManager(INPUT_FILE_PATH, OUTPUT_FILE_PATH)
+        manager = SummarizationManager(input_file_path, output_file_path)
         df = manager.load_input_data()
 
         # Check if the output file exists and if all summaries have been generated
@@ -140,6 +141,10 @@ def main():
     except Exception as e:
         print(f"An error occurred: {e}")
         sys.exit(1)
+
+
+def main():
+    run_text_summarization(INPUT_FILE_PATH, OUTPUT_FILE_PATH)
 
 
 if __name__ == '__main__':

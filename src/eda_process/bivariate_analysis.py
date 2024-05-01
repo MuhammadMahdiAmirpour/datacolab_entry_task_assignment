@@ -94,17 +94,49 @@ class CovarianceMatrixPlotter:
         plt.show()
 
 
+class BiVariateAnalyzer:
+    """
+    A class to perform bivariate analysis on a DataFrame.
+
+    Attributes:
+        df (pandas.DataFrame): The input DataFrame.
+
+    Methods:
+        analyze_bivariate_relationships(): Calculates and plots the covariance matrix of the DataFrame.
+    """
+
+    def __init__(self, df):
+        """
+        Initializes the BiVariateAnalyzer object.
+
+        Args:
+            df (pandas.DataFrame): The input DataFrame.
+        """
+        self.df = df
+
+    def analyze_bivariate_relationships(self):
+        """
+        Calculates and plots the covariance matrix of the DataFrame.
+
+        This method uses the CovarianceMatrixCalculator and CovarianceMatrixPlotter classes
+        to calculate the covariance matrix and plot it as a heatmap.
+        """
+        # Calculate the covariance matrix
+        calculator = CovarianceMatrixCalculator(self.df)
+        covariance_matrix = calculator.calculate_covariance_matrix()
+        print(f"Covariance matrix shape: {covariance_matrix.shape}")
+
+        # Plot the covariance matrix
+        plotter = CovarianceMatrixPlotter(self.df, covariance_matrix)
+        plotter.plot_covariance_matrix()
+
+
 if __name__ == '__main__':
     # Load the dataset
     column_names = ["length", "freebase_id", "book_name", "author_name", "date", "freebase_id_json", "summary"]
     data = pd.read_csv('../../data/datacolab_dataset/txt_format/booksummaries.txt', sep="\t", header=None,
                        names=column_names)
 
-    # Calculate the covariance matrix
-    calculator = CovarianceMatrixCalculator(data)
-    covariance_matrix = calculator.calculate_covariance_matrix()
-    print(f"Covariance matrix shape: {covariance_matrix.shape}")
-
-    # Plot the covariance matrix
-    plotter = CovarianceMatrixPlotter(data, covariance_matrix)
-    plotter.plot_covariance_matrix()
+    # Perform bivariate analysis
+    analyzer = BiVariateAnalyzer(data)
+    analyzer.analyze_bivariate_relationships()

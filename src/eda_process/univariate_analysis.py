@@ -2,9 +2,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-class UnivariateSummary:
+class UniVariateAnalyzer:
     """
-    A class to perform univariate analysis on a DataFrame.
+    A class to perform uni-variate analysis on a DataFrame.
 
     Attributes:
         df (pandas.DataFrame): The input DataFrame.
@@ -79,6 +79,6 @@ if __name__ == "__main__":
     df = pd.read_csv('../../data/datacolab_dataset/txt_format/booksummaries.txt', sep="\t", header=None,
                      names=column_names)
 
-    # Create an instance of the UnivariateSummary class and perform the analysis
-    uni_variate_summary = UnivariateSummary(df)
-    uni_variate_summary.perform_analysis()
+    # Create an instance of the Uni variateSummary class and perform the analysis
+    uni_variate_analyzer = UniVariateAnalyzer(df)
+    uni_variate_analyzer.perform_analysis()

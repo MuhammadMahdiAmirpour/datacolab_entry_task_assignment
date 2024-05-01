@@ -39,7 +39,7 @@ class DataCleaner:
         self.df.drop_duplicates(keep='first', inplace=True)
 
         # Transform date formats
-        self.data_utility_provider.transform_date_formats()
+        # self.data_utility_provider.transform_date_formats()
 
         # Parse JSON column
         self.data_utility_provider.parse_json_column(column_name="freebase_id_json")

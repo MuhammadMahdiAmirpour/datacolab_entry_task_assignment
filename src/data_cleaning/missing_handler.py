@@ -37,20 +37,19 @@ class DataPreprocessor:
         # Handle missing values (replace with empty string)
         self.df.fillna("", inplace=True)
 
-        # Drop duplicate rows
-        self.df.drop_duplicates(keep='first', inplace=True)
 
-        # Fill the date column with default values
-        self.fill_date_column_with_default_values()
+        # Fill the date column with default values, this line is optional, uncomment it if you want to use it
+        # self.fill_date_column_with_default_values()
 
         # Guess the publish year based on the author's average publish year
         self.guess_publish_year()
 
-        # Guess the author's name based on the genre and year of publishing
-        self.guess_author()
+        # Guess the author's name based on the genre and year of publishing, this line is optional, uncomment it if
+        # you want to use it
+        # self.guess_author()
 
-        # Guess the author's name based on the genre
-        self.guess_author_by_genre()
+        # Guess the author's name based on the genre, this line is optional, uncomment it if you want to use it
+        # self.guess_author_by_genre()
 
         # Handle missing values (drop rows with missing 'date' or 'freebase_id_json')
         self.df = self.df.dropna(subset=['date', 'freebase_id_json'])
@@ -204,9 +203,9 @@ class DataPreprocessor:
         return self.df
 
 
-class DataCleaner:
+class MissingHandler:
     """
-    A class to clean and preprocess a DataFrame.
+    A class to handle missing values and preprocess a DataFrame.
 
     Attributes:
         df (pandas.DataFrame): The input DataFrame.
@@ -225,7 +224,7 @@ class DataCleaner:
         self.df = df
         self.data_preprocessor = DataPreprocessor(df)
 
-    def clean_data(self):
+    def handle_missing(self):
         """
         Cleans and preprocesses the input DataFrame.
 
@@ -241,8 +240,8 @@ def main():
                        names=column_names)
 
     # Create an instance of the DataCleaner class and clean the data
-    data_cleaner = DataCleaner(data)
-    cleaned_data = data_cleaner.clean_data()
+    missing_handler = MissingHandler(data)
+    cleaned_data = missing_handler.handle_missing()
 
     # Access the cleaned DataFrame
     print(cleaned_data.head())

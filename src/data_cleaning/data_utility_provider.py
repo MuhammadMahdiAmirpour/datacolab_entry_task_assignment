@@ -1,6 +1,8 @@
 import json
 import re
 import string
+from datetime import datetime
+import numpy as np
 
 import pandas as pd
 
@@ -41,9 +43,12 @@ class DataUtilityProvider:
         """
 
         def parse_json(cell):
-            try:
-                return json.loads(cell) if pd.notnull(cell) and isinstance(cell, str) else cell
-            except json.JSONDecodeError:
+            if pd.notnull(cell) and isinstance(cell, str):
+                try:
+                    return dict(json.loads(cell))
+                except json.JSONDecodeError:
+                    return cell
+            else:
                 return cell
 
         self.df[column_name] = self.df[column_name].apply(parse_json)
@@ -92,17 +97,18 @@ class DataUtilityProvider:
         self.df["summary"] = self.df["summary"].map(self.clean_summary)
 
     def unify_date_format_year(self):
-        """
-        Unifies the date format to year.
+        def extract_year(date_str):
+            if isinstance(date_str, str):
+                if len(date_str) == 4 and date_str.isdigit():
+                    return int(date_str)
+                elif len(date_str) == 10 and date_str[4] in ['-', '/'] and date_str[:4].isdigit():
+                    return int(date_str[:4])
+                elif len(date_str) == 7 and date_str[4] in ['-', '/'] and date_str[:4].isdigit():
+                    return int(date_str[:4])
+            return pd.NaT
 
-        Returns:
-            pandas.DataFrame: The DataFrame with the unified date format.
-        """
-        years = [date[:4] if isinstance(date, str) and len(date) >= 4 else '' for date in self.df['date']]
-        self.df['date'] = years
-        self.df['date'] = pd.to_numeric(self.df['date'], errors='coerce')
-        self.df['date'] = self.df['date'].astype(int, errors='ignore')
-        return self.df
+        # Apply the extract_year function to the 'date' column
+        self.df['date'] = self.df['date'].apply(extract_year)
 
 
 if __name__ == '__main__':
@@ -110,13 +116,14 @@ if __name__ == '__main__':
     data = pd.read_csv('../../data/datacolab_dataset/txt_format/booksummaries.txt', sep="\t", header=None,
                        names=column_names)
 
+    print(data['date'].head(30))
     # Create an instance of the DataCleaner class and clean the data
     data_cleaner = DataUtilityProvider(data)
     data_cleaner.parse_json_column("freebase_id_json")
-    data_cleaner.transform_date_formats()
+    # data_cleaner.transform_date_formats()
     data_cleaner.clean_summary_df()
     data_cleaner.unify_date_format_year()
 
     # Access the cleaned DataFrame
     cleaned_data = data_cleaner.df
-    print(cleaned_data.head())
+    print(cleaned_data['date'].head(30))

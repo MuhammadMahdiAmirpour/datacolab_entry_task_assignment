@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  data-science-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+      - ./data:/app/data
+      - ./results/visualization:/app/results/visualization
+      - ./results/image_outputs:/app/results/image_outputs
+      - ./results/summary_outputs:/app/results/summary_outputs
+    environment:
+      - PYTHONPATH=/app/src
+
+volumes:
+  visualization-results:
+  image-outputs:
+  summary-outputs:

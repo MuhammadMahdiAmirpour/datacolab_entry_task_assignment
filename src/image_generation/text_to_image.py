@@ -17,17 +17,19 @@ from tqdm import tqdm
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 
 # Define global variables for input and output file paths, you can change this if you have your custom dataset
-INPUT_FILE_PATH = '/content/drive/MyDrive/datacolab_dataset/booksummaries.txt'
-OUTPUT_DIR = '/content/drive/MyDrive/datacolab_dataset/image_outputs'
+# INPUT_FILE_PATH = '/content/drive/MyDrive/datacolab_dataset/booksummaries.txt'
+# OUTPUT_DIR = '/content/drive/MyDrive/datacolab_dataset/image_outputs'
+INPUT_FILE_PATH = '../../results/summary_outputs/output.csv'
+OUTPUT_DIRECTORY_PATH = '../../results/image_outputs/'
 
 
-def get_existing_image_filenames() -> set:
+def get_existing_image_filenames(output_directory_path) -> set:
     """
     Get a set of existing image filenames in the output directory.
     """
-    if not os.path.exists(OUTPUT_DIR):
-        os.makedirs(OUTPUT_DIR, exist_ok=True)
-    return set([f.split('.')[0] for f in os.listdir(OUTPUT_DIR) if f.endswith('.png')])
+    if not os.path.exists(output_directory_path):
+        os.makedirs(output_directory_path, exist_ok=True)
+    return set([f.split('.')[0] for f in os.listdir(output_directory_path) if f.endswith('.png')])
 
 
 class ImageGenerator:
@@ -35,10 +37,11 @@ class ImageGenerator:
     A class responsible for generating images from text prompts using the Amused Diffusion model.
     """
 
-    def __init__(self, device: torch.device):
+    def __init__(self, device: torch.device, output_directory_path):
         self.device = device
         self.pipe = self.load_amused_pipeline()
-        self.existing_images = get_existing_image_filenames()
+        self.out_dir_path = output_directory_path
+        self.existing_images = get_existing_image_filenames(self.out_dir_path)
 
     def load_amused_pipeline(self) -> AmusedPipeline:
         """
@@ -64,7 +67,7 @@ class ImageGenerator:
         try:
             # Generate the image using the Amused Diffusion model
             image = self.pipe(prompt, negative_prompt="low quality, ugly", generator=torch.manual_seed(0)).images[0]
-            image_path = os.path.join(OUTPUT_DIR, f"{cleaned_freebase_id}.png")
+            image_path = os.path.join(self.out_dir_path, f"{cleaned_freebase_id}.png")
             image.save(image_path)
             print(f"Image saved: {image_path}")
             sys.stdout.flush()
@@ -92,7 +95,7 @@ class DataManager:
         return pd.DataFrame(data)
 
 
-def main():
+def generate_image_from_text(input_file_path, output_directory_path):
     """
     The main entry point of the application.
 
@@ -101,11 +104,12 @@ def main():
     3. Create an ImageGenerator instance and start the parallel image generation process
     """
     try:
-        manager = DataManager(INPUT_FILE_PATH)
+        manager = DataManager(input_file_path)
         df = manager.load_input_data()
 
         # Create an ImageGenerator instance and start the parallel image generation process
-        generator = ImageGenerator(device='cuda' if torch.cuda.is_available() else 'cpu')
+        generator = ImageGenerator(device='cuda' if torch.cuda.is_available() else 'cpu',
+                                   output_directory_path=output_directory_path)
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [executor.submit(generator.generate_image, row['freebase_id'], row['summary']) for _, row in
@@ -114,6 +118,10 @@ def main():
     except Exception as e:
         print(f"An error occurred: {e}")
         sys.exit(1)
+
+
+def main():
+    generate_image_from_text(INPUT_FILE_PATH, OUTPUT_DIRECTORY_PATH)
 
 
 if __name__ == '__main__':
